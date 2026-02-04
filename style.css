@@ -106,8 +106,10 @@ h1 {
     border-radius: 50px;
     font-size: 1.1rem;
     position: absolute;
-    /* transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); Added via JS to avoid initial flash */
+    /* Initial position will be set via JS relative to the card */
     pointer-events: auto;
+    z-index: 10;
+    white-space: nowrap;
 }
 
 .back-btn {
