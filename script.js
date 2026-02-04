@@ -1,6 +1,8 @@
 // Configuration
 const VALENTINE_NAME = "Nishaaa";
 
+console.log("Valentine script initialized 💖");
+
 document.addEventListener('DOMContentLoaded', () => {
     const questionCard = document.getElementById('question-card');
     const successCard = document.getElementById('success-card');
@@ -9,6 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const noBtn = document.getElementById('no-btn');
     const backBtn = document.getElementById('back-btn');
     const card = document.querySelector('.card');
+
+    if (!questionCard || !successCard || !yesBtn || !noBtn || !card) {
+        console.error("Missing essential DOM elements!");
+        return;
+    }
 
     if (questionText) {
         questionText.innerText = `${VALENTINE_NAME} will you be my valentine??? 🥺`;
@@ -23,6 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const repulsionStrength = 0.8;
     const detectionRadius = 180;
 
+    // Cache button dimensions to avoid layout thrashing
+    let btnWidth = 0;
+    let btnHeight = 0;
+
     // Pointer tracking
     let pointerX = -1000;
     let pointerY = -1000;
@@ -30,6 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize position relative to viewport
     const initNoButton = () => {
         const cardRect = card.getBoundingClientRect();
+        const btnRect = noBtn.getBoundingClientRect();
+
+        btnWidth = btnRect.width;
+        btnHeight = btnRect.height;
 
         // Start position: relative to the card's position in viewport
         btnX = cardRect.left + cardRect.width * 0.75;
@@ -51,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const btnRect = noBtn.getBoundingClientRect();
+        // Center point of button
         const centerX = btnX;
         const centerY = btnY;
 
@@ -65,8 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const force = (detectionRadius - distance) / detectionRadius;
             const angle = Math.atan2(dy, dx);
 
-            velX += Math.cos(angle) * force * repulsionStrength * 12;
-            velY += Math.sin(angle) * force * repulsionStrength * 12;
+            velX += Math.cos(angle) * force * repulsionStrength * 15;
+            velY += Math.sin(angle) * force * repulsionStrength * 15;
         }
 
         // Natural drag/friction
@@ -79,10 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Viewport Boundary Clamping
         const margin = 20;
-        const minX = btnRect.width / 2 + margin;
-        const maxX = window.innerWidth - btnRect.width / 2 - margin;
-        const minY = btnRect.height / 2 + margin;
-        const maxY = window.innerHeight - btnRect.height / 2 - margin;
+        const minX = btnWidth / 2 + margin;
+        const maxX = window.innerWidth - btnWidth / 2 - margin;
+        const minY = btnHeight / 2 + margin;
+        const maxY = window.innerHeight - btnHeight / 2 - margin;
 
         if (btnX < minX) {
             btnX = minX;
@@ -112,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Yes Button Logic
     yesBtn.addEventListener('click', () => {
+        console.log("Yes clicked!");
         questionCard.classList.add('slide-out');
         setTimeout(() => {
             questionCard.classList.add('hidden');
