@@ -105,11 +105,12 @@ h1 {
     padding: 12px 30px;
     border-radius: 50px;
     font-size: 1.1rem;
-    position: absolute;
-    /* Initial position will be set via JS relative to the card */
-    pointer-events: auto;
-    z-index: 10;
+    position: fixed;
+    /* Initial position will be set via JS relative to viewport */
+    pointer-events: none;
+    z-index: 100;
     white-space: nowrap;
+    will-change: transform, left, top;
 }
 
 .back-btn {

@@ -1,7 +1,6 @@
 // Configuration
 const VALENTINE_NAME = "Nishaaa";
 
-// DOM Elements
 document.addEventListener('DOMContentLoaded', () => {
     const questionCard = document.getElementById('question-card');
     const successCard = document.getElementById('success-card');
@@ -11,108 +10,138 @@ document.addEventListener('DOMContentLoaded', () => {
     const backBtn = document.getElementById('back-btn');
     const card = document.querySelector('.card');
 
-    // Set Dynamic Name (as backup to HTML)
     if (questionText) {
         questionText.innerText = `${VALENTINE_NAME} will you be my valentine??? 🥺`;
     }
 
-    // Initial positioning of the No button
-    const resetNoButton = () => {
-        const cardRect = card.getBoundingClientRect();
-        const btnRect = noBtn.getBoundingClientRect();
+    // Physics State
+    let btnX = 0;
+    let btnY = 0;
+    let velX = 0;
+    let velY = 0;
+    const friction = 0.94;
+    const repulsionStrength = 0.8;
+    const detectionRadius = 180;
 
-        noBtn.style.transition = 'none';
-        // Position it to the right of the Yes button initially
-        // Using percentages relative to the CARD now
-        noBtn.style.left = '75%';
-        noBtn.style.top = '65%';
+    // Pointer tracking
+    let pointerX = -1000;
+    let pointerY = -1000;
+
+    // Initialize position relative to viewport
+    const initNoButton = () => {
+        const cardRect = card.getBoundingClientRect();
+
+        // Start position: relative to the card's position in viewport
+        btnX = cardRect.left + cardRect.width * 0.75;
+        btnY = cardRect.top + cardRect.height * 0.65;
+
         noBtn.style.transform = 'translate(-50%, -50%)';
+        updateUI();
     };
 
-    // "No" Button Interaction Logic
-    const moveNoButton = () => {
-        const cardRect = card.getBoundingClientRect();
+    const updateUI = () => {
+        noBtn.style.left = `${btnX}px`;
+        noBtn.style.top = `${btnY}px`;
+    };
+
+    const animate = () => {
+        // Only run physics if question card is visible
+        if (questionCard.classList.contains('hidden')) {
+            requestAnimationFrame(animate);
+            return;
+        }
+
         const btnRect = noBtn.getBoundingClientRect();
+        const centerX = btnX;
+        const centerY = btnY;
 
-        // Enable transition for smooth movement
-        noBtn.style.transition = 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1.2)';
+        // Vector from pointer to button center
+        const dx = centerX - pointerX;
+        const dy = centerY - pointerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Padding from edges
-        const padding = 20;
+        if (distance < detectionRadius && distance > 0) {
+            // Stronger repulsion as target gets closer
+            const force = (detectionRadius - distance) / detectionRadius;
+            const angle = Math.atan2(dy, dx);
 
-        // Calculate maximum available space inside the card
-        const maxX = cardRect.width - btnRect.width - padding;
-        const maxY = cardRect.height - btnRect.height - padding;
+            velX += Math.cos(angle) * force * repulsionStrength * 12;
+            velY += Math.sin(angle) * force * repulsionStrength * 12;
+        }
 
-        // Generate random position within boundaries
-        let randomX = Math.floor(Math.random() * (maxX - padding)) + padding;
-        let randomY = Math.floor(Math.random() * (maxY - padding)) + padding;
+        // Natural drag/friction
+        velX *= friction;
+        velY *= friction;
 
-        // Final safety check for boundaries
-        randomX = Math.max(padding, Math.min(randomX, maxX));
-        randomY = Math.max(padding, Math.min(randomY, maxY));
+        // Update position
+        btnX += velX;
+        btnY += velY;
 
-        // Apply new position relative to the CARD container
-        noBtn.style.left = `${randomX}px`;
-        noBtn.style.top = `${randomY}px`;
-        noBtn.style.transform = 'none';
+        // Viewport Boundary Clamping
+        const margin = 20;
+        const minX = btnRect.width / 2 + margin;
+        const maxX = window.innerWidth - btnRect.width / 2 - margin;
+        const minY = btnRect.height / 2 + margin;
+        const maxY = window.innerHeight - btnRect.height / 2 - margin;
+
+        if (btnX < minX) {
+            btnX = minX;
+            velX *= -0.5; // Bounce off left/right
+        } else if (btnX > maxX) {
+            btnX = maxX;
+            velX *= -0.5;
+        }
+
+        if (btnY < minY) {
+            btnY = minY;
+            velY *= -0.5; // Bounce off top/bottom
+        } else if (btnY > maxY) {
+            btnY = maxY;
+            velY *= -0.5;
+        }
+
+        updateUI();
+        requestAnimationFrame(animate);
     };
 
-    // Events for "No" button escaping
-    noBtn.addEventListener('mouseenter', moveNoButton);
-    noBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        moveNoButton();
-    }, { passive: false });
-    noBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        moveNoButton();
+    // Unified Pointer Tracking
+    window.addEventListener('pointermove', (e) => {
+        pointerX = e.clientX;
+        pointerY = e.clientY;
     });
 
-    // "Yes" Button Logic
+    // Yes Button Logic
     yesBtn.addEventListener('click', () => {
         questionCard.classList.add('slide-out');
-
         setTimeout(() => {
             questionCard.classList.add('hidden');
             questionCard.classList.remove('slide-out');
-
             successCard.classList.remove('hidden');
             successCard.classList.add('fade-in');
         }, 500);
     });
 
-    // "Back" Button Logic
+    // Back Button Logic
     backBtn.addEventListener('click', () => {
         successCard.classList.remove('fade-in');
         successCard.classList.add('hidden');
-
         questionCard.classList.remove('hidden');
         questionCard.classList.add('fade-in');
 
-        // Reset No button position
-        resetNoButton();
+        // Reset state
+        velX = 0;
+        velY = 0;
+        initNoButton();
     });
 
-    // Proximity tracking for the "No" button
-    document.addEventListener('mousemove', (e) => {
-        if (questionCard.classList.contains('hidden') || successCard.classList.contains('fade-in')) return;
+    // Start
+    initNoButton();
+    requestAnimationFrame(animate);
 
-        const noBtnRect = noBtn.getBoundingClientRect();
-        const noBtnCenterX = noBtnRect.left + noBtnRect.width / 2;
-        const noBtnCenterY = noBtnRect.top + noBtnRect.height / 2;
-
-        const distance = Math.sqrt(
-            Math.pow(e.clientX - noBtnCenterX, 2) +
-            Math.pow(e.clientY - noBtnCenterY, 2)
-        );
-
-        // If mouse gets within 100px, flee!
-        if (distance < 100) {
-            moveNoButton();
+    // Initial positioning fix for responsive resize
+    window.addEventListener('resize', () => {
+        if (!questionCard.classList.contains('hidden')) {
+            initNoButton();
         }
     });
-
-    // Initialize
-    resetNoButton();
 });
